@@ -1,0 +1,8 @@
+node_modules
+.env
+.env.local
+.next
+.data
+next-env.d.ts
+tsconfig.tsbuildinfo
+legacy-express-app.tgz

@@ -32,7 +32,7 @@ With no Supabase variables set the app runs in **demo mode**: cards and images a
 ## How it works
 
 - **Wall:** pan/zoom canvas (drag, pinch, trackpad, +/− buttons), Recenter animation, random ±8° rotation and pin colour, drop-in animation for cards arriving live, tap a card to flip and read the note.
-- **Add photo:** Photo library / Choose file → centre-crop square, EXIF-aware, max 1600px → printer animation → frame colour (4 swatches) → note on the back (140 chars, From) → Share (Web Share API, PNG download fallback) → Pin to wall.
+- **Add photo:** Photo library / Choose file → whole photo kept (no cropping), EXIF-aware, longest side max 1600px → printer animation → frame colour (4 swatches) → note on the back (140 chars, From) → Share (Web Share API, PNG download fallback) → Pin to wall.
 - **The card image** (frame + wordmark + photo + footer) is composed in the browser (`lib/compose.ts`) so preview, share PNG and upload are identical. The server stores the JPEG and places it at a free spot (`lib/placement.ts`).
 - **Safe areas / keyboard:** `viewport-fit=cover`, `interactive-widget=resizes-content`, `visualViewport` sizing and scroll-into-view so the note field stays visible; inputs are ≥16px to avoid iOS zoom.
 
@@ -56,7 +56,7 @@ Open a card to ♥ like it, 💬 read/post comments, or ⬇ download the card im
 
 - Supabase mode (realtime, storage, RLS) was **not exercised** here; only demo mode was run end to end. Verify with your project before the event.
 - Tested in desktop Chrome with mobile emulation, not on real iOS Safari/Android devices. The Web Share file sheet needs a real device check.
-- Crop is automatic centre-crop (no manual reposition). HEIC works only where the browser can decode it.
+- Photos are never cropped: non-square ones sit inside the square window over a soft blurred copy of themselves. HEIC works only where the browser can decode it.
 - Colours/fonts are provisional (no official EasyStepIn brand assets supplied); the wordmark is the Chango font with per-letter jitter, not an official logo. Edit `lib/types.ts` (frame colours) and `lib/config.ts`.
 - Retention/privacy: there is no consent or privacy notice in this brief's flow. Add one if your policy requires it.
 - The previous Express app is archived in `legacy-express-app.tgz`.

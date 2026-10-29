@@ -90,7 +90,22 @@ export async function composeCard({ photo, frameColor }: ComposeOptions): Promis
   ctx.beginPath();
   ctx.roundRect(PHOTO.x, PHOTO.y, PHOTO.size, PHOTO.size, 10);
   ctx.clip();
-  ctx.drawImage(photo, 0, 0, photo.width, photo.height, PHOTO.x, PHOTO.y, PHOTO.size, PHOTO.size);
+  // Whole photo, never cropped: fit inside the square window over a soft blurred copy of itself.
+  const tiny = document.createElement('canvas');
+  tiny.width = tiny.height = 24;
+  const cover = Math.max(24 / photo.width, 24 / photo.height);
+  const tctx = tiny.getContext('2d')!;
+  tctx.imageSmoothingQuality = 'high';
+  tctx.drawImage(photo, (24 - photo.width * cover) / 2, (24 - photo.height * cover) / 2, photo.width * cover, photo.height * cover);
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(tiny, PHOTO.x, PHOTO.y, PHOTO.size, PHOTO.size);
+  ctx.fillStyle = 'rgba(0,0,0,.22)';
+  ctx.fillRect(PHOTO.x, PHOTO.y, PHOTO.size, PHOTO.size);
+  const fit = Math.min(PHOTO.size / photo.width, PHOTO.size / photo.height);
+  const w = photo.width * fit;
+  const h = photo.height * fit;
+  ctx.drawImage(photo, PHOTO.x + (PHOTO.size - w) / 2, PHOTO.y + (PHOTO.size - h) / 2, w, h);
   ctx.restore();
 
   // Footer: "Built with ♥ by <community>"

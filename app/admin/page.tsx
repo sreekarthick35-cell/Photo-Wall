@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { FRAME_COLORS, FRAME_KEYS, NAME_MAX, NOTE_MAX, type Card, type Comment, type FrameColor } from '@/lib/types';
-import { canvasToBlob, composeCard } from '@/lib/compose';
+import { PHOTO, canvasToBlob, composeCard } from '@/lib/compose';
 import { PhotoError, processPhoto } from '@/lib/image';
 
 type AdminCard = Card & { comments: Comment[] };
@@ -70,6 +70,29 @@ export default function Admin() {
       setMsg(err instanceof PhotoError ? err.message : 'Could not create the card.');
     } finally {
       setNc((v) => ({ ...v, busy: false }));
+    }
+  }
+  /** Saves just the employee's photo: the card image cropped to the photo area, without the frame, title or footer. */
+  async function downloadPhoto(c: Card) {
+    try {
+      const blob = await (await fetch(c.image_url)).blob();
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.src = url;
+      await img.decode();
+      const k = img.naturalWidth / 900; // card images are 900px wide; scale in case of a different size
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = Math.round(PHOTO.size * k);
+      canvas.getContext('2d')!.drawImage(img, PHOTO.x * k, PHOTO.y * k, PHOTO.size * k, PHOTO.size * k, 0, 0, canvas.width, canvas.height);
+      URL.revokeObjectURL(url);
+      const out = await canvasToBlob(canvas, 'image/jpeg', 0.95);
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(out);
+      a.download = `photo-${(c.author_name || 'guest').replace(/[^\w-]+/g, '-').toLowerCase()}-${c.id.slice(0, 6)}.jpg`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    } catch {
+      setMsg('Could not download that photo.');
     }
   }
   async function logout() { await fetch('/api/admin/login', { method: 'DELETE' }); setState('out'); }
@@ -151,6 +174,7 @@ export default function Admin() {
                     ))}
                   </ul>
                 )}
+                <button className="mt-2 w-full rounded-full border py-2 text-sm font-semibold" onClick={() => downloadPhoto(c)}>⬇ Download photo</button>
                 <div className="mt-2 flex gap-2">
                   <button className="flex-1 rounded-full border py-2 text-sm font-semibold" onClick={() => setEditing({ id: c.id, note: c.note, author: c.author_name })}>Edit</button>
                   <button className="flex-1 rounded-full border py-2 text-sm font-semibold" onClick={() => hide(c)}>{c.hidden ? 'Show' : 'Hide'}</button>
